@@ -1,7 +1,7 @@
 package br.com.curso.quarkus.controller;
 
 import br.com.curso.quarkus.domain.Agencia;
-import br.com.curso.quarkus.service.http.AgenciaService;
+import br.com.curso.quarkus.service.AgenciaService;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.UriInfo;

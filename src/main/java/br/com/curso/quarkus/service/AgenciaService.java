@@ -1,8 +1,13 @@
-package br.com.curso.quarkus.service.http;
+package br.com.curso.quarkus.service;
 
 import br.com.curso.quarkus.domain.Agencia;
 import br.com.curso.quarkus.exceptions.AgenciaNaoAtivaOuNaoEncontradaException;
 import br.com.curso.quarkus.repository.AgenciaRepository;
+import br.com.curso.quarkus.domain.http.AgenciaHttp;
+import br.com.curso.quarkus.service.http.SituacaoCadastral;
+import br.com.curso.quarkus.service.http.SituacaoCadastralHttpService;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -10,13 +15,15 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 @ApplicationScoped
 public class AgenciaService {
 
-    private final AgenciaRepository agenciaRepository;
-
     @RestClient
     private SituacaoCadastralHttpService situacaoCadastralHttpService;
 
-    AgenciaService(AgenciaRepository agenciaRepository) {
+    private final AgenciaRepository agenciaRepository;
+    private final MeterRegistry meterRegistry;
+
+    AgenciaService(AgenciaRepository agenciaRepository, MeterRegistry meterRegistry) {
         this.agenciaRepository = agenciaRepository;
+        this.meterRegistry = meterRegistry;
     }
 
     @Transactional
@@ -24,7 +31,14 @@ public class AgenciaService {
         AgenciaHttp agenciaRetorno = situacaoCadastralHttpService.buscarPorCnpj(agencia.getCnpj());
         if(agenciaRetorno != null && agenciaRetorno.getSituacaoCadastral().equals(SituacaoCadastral.ATIVO)) {
             agenciaRepository.persist(agencia);
+            Log.info("Agência incluida com sucesso.");
+            meterRegistry.counter("agencia_adicionada_counter").increment();
+        } else if(agenciaRetorno != null && agenciaRetorno.getSituacaoCadastral().equals(SituacaoCadastral.INATIVO)) {
+            Log.info("Agência encontrada está inativa.");
+            throw new AgenciaNaoAtivaOuNaoEncontradaException();
         } else {
+            Log.info("Agência não encontrada.");
+            meterRegistry.counter("agencia_nao_adicionada_counter").increment();
             throw new AgenciaNaoAtivaOuNaoEncontradaException();
         }
     }
@@ -36,11 +50,13 @@ public class AgenciaService {
     @Transactional
     public void deletar(Long id) {
         agenciaRepository.deleteById(id);
+        Log.info("Agência excluida com sucesso.");
     }
 
     @Transactional
     public void alterar(Agencia agencia) {
         agenciaRepository.update("nome = ?1, razaoSocial = ?2, cnpj = ?3 where id = ?4",
                 agencia.getNome(), agencia.getRazaoSocial(), agencia.getCnpj(), agencia.getId());
+        Log.info("Agência atualizada com sucesso.");
     }
 }
