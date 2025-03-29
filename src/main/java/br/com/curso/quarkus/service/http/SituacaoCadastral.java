@@ -1,5 +1,5 @@
 package br.com.curso.quarkus.service.http;
 
-public enum StituacaoCadastral {
+public enum SituacaoCadastral {
     ATIVO, INATIVO;
 }

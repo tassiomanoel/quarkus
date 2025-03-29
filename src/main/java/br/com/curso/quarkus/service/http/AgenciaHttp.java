@@ -5,7 +5,14 @@ public class AgenciaHttp {
     private String nome;
     private String razaoSocial;
     private String cnpj;
-    private StituacaoCadastral situacaoCadastral;
+    private SituacaoCadastral situacaoCadastral;
+
+    public AgenciaHttp(String nome, String razaoSocial, String cnpj, SituacaoCadastral situacaoCadastral) {
+        this.nome = nome;
+        this.razaoSocial = razaoSocial;
+        this.cnpj = cnpj;
+        this.situacaoCadastral = situacaoCadastral;
+    }
 
     public String getNome() {
         return nome;
@@ -31,11 +38,11 @@ public class AgenciaHttp {
         this.cnpj = cnpj;
     }
 
-    public StituacaoCadastral getSituacaoCadastral() {
+    public SituacaoCadastral getSituacaoCadastral() {
         return situacaoCadastral;
     }
 
-    public void setSituacaoCadastral(StituacaoCadastral situacaoCadastral) {
+    public void setSituacaoCadastral(SituacaoCadastral situacaoCadastral) {
         this.situacaoCadastral = situacaoCadastral;
     }
 }
