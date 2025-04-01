@@ -7,6 +7,7 @@ import br.com.curso.quarkus.domain.http.AgenciaHttp;
 import br.com.curso.quarkus.service.http.SituacaoCadastral;
 import br.com.curso.quarkus.service.http.SituacaoCadastralHttpService;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -28,19 +29,22 @@ public class AgenciaService {
 
     @Transactional
     public void cadastrar(Agencia agencia) {
-        AgenciaHttp agenciaRetorno = situacaoCadastralHttpService.buscarPorCnpj(agencia.getCnpj());
-        if(agenciaRetorno != null && agenciaRetorno.getSituacaoCadastral().equals(SituacaoCadastral.ATIVO)) {
-            agenciaRepository.persist(agencia);
-            Log.info("Agência incluida com sucesso.");
-            meterRegistry.counter("agencia_adicionada_counter").increment();
-        } else if(agenciaRetorno != null && agenciaRetorno.getSituacaoCadastral().equals(SituacaoCadastral.INATIVO)) {
-            Log.info("Agência encontrada está inativa.");
-            throw new AgenciaNaoAtivaOuNaoEncontradaException();
-        } else {
-            Log.info("Agência não encontrada.");
-            meterRegistry.counter("agencia_nao_adicionada_counter").increment();
-            throw new AgenciaNaoAtivaOuNaoEncontradaException();
-        }
+        Timer timer = this.meterRegistry.timer("cadastrar_agencia_timer");
+        timer.record(() -> {
+            AgenciaHttp agenciaRetorno = situacaoCadastralHttpService.buscarPorCnpj(agencia.getCnpj());
+            if(agenciaRetorno != null && agenciaRetorno.getSituacaoCadastral().equals(SituacaoCadastral.ATIVO)) {
+                agenciaRepository.persist(agencia);
+                Log.info("Agência incluida com sucesso.");
+                meterRegistry.counter("agencia_adicionada_counter").increment();
+            } else if(agenciaRetorno != null && agenciaRetorno.getSituacaoCadastral().equals(SituacaoCadastral.INATIVO)) {
+                Log.info("Agência encontrada está inativa.");
+                throw new AgenciaNaoAtivaOuNaoEncontradaException();
+            } else {
+                Log.info("Agência não encontrada.");
+                meterRegistry.counter("agencia_nao_adicionada_counter").increment();
+                throw new AgenciaNaoAtivaOuNaoEncontradaException();
+            }
+        });
     }
 
     public Agencia buscarPorId(Long id) {

@@ -1,8 +1,6 @@
 package br.com.curso.quarkus.service.http;
 
 import br.com.curso.quarkus.domain.Agencia;
-import br.com.curso.quarkus.domain.Endereco;
-import br.com.curso.quarkus.domain.http.AgenciaHttp;
 import br.com.curso.quarkus.exceptions.AgenciaNaoAtivaOuNaoEncontradaException;
 import br.com.curso.quarkus.repository.AgenciaRepository;
 import br.com.curso.quarkus.service.AgenciaService;
@@ -30,29 +28,33 @@ public class AgenciaServiceTest {
 
 
     @Test
-    public void deveNaoCadastrarQuandoClientRetornarNull() {
+    public void deveLancarExcecaoQuandoClientRetornarNull() {
         Agencia agencia = AgenciaFixture.criarAgencia();
-        Mockito.when(situacaoCadastralHttpService.buscarPorCnpj("123")).thenReturn(null);
-        Assertions.assertThrows(AgenciaNaoAtivaOuNaoEncontradaException.class, () -> agenciaService.cadastrar(agencia));
+        Mockito.when(situacaoCadastralHttpService.buscarPorCnpj(agencia.getCnpj())).thenReturn(null);
+
+        Assertions.assertThrows(AgenciaNaoAtivaOuNaoEncontradaException.class,
+                () -> agenciaService.cadastrar(agencia));
         Mockito.verify(agenciaRepository, Mockito.never()).persist(agencia);
     }
 
     @Test
     public void deveCadastrarQuandoClientRetornarSituacaoCadastralAtivo() {
         Agencia agencia = AgenciaFixture.criarAgencia();
-        Mockito.when(situacaoCadastralHttpService.buscarPorCnpj("123")).thenReturn(AgenciaFixture.criarAgenciaHttp(SituacaoCadastral.INATIVO));
+        Mockito.when(situacaoCadastralHttpService.buscarPorCnpj(agencia.getCnpj()))
+                .thenReturn(AgenciaFixture.criarAgenciaHttp(SituacaoCadastral.ATIVO));
+
         agenciaService.cadastrar(agencia);
-        Mockito.verify(agenciaRepository).persist(agencia);
+        Mockito.verify(agenciaRepository, Mockito.times(1)).persist(agencia);
     }
 
     @Test
-    public void deveCadastrarQuandoClientRetornarSituacaoCadastralInativo() {
+    public void deveLancarExcecaoQuandoClientRetornarSituacaoCadastralInativo() {
         Agencia agencia = AgenciaFixture.criarAgencia();
-        Mockito.when(situacaoCadastralHttpService.buscarPorCnpj("123")).thenReturn(AgenciaFixture.criarAgenciaHttp(SituacaoCadastral.INATIVO));
-        agenciaService.cadastrar(agencia);
+        Mockito.when(situacaoCadastralHttpService.buscarPorCnpj(agencia.getCnpj()))
+                .thenReturn(AgenciaFixture.criarAgenciaHttp(SituacaoCadastral.INATIVO));
+
+        Assertions.assertThrows(AgenciaNaoAtivaOuNaoEncontradaException.class,
+                () -> agenciaService.cadastrar(agencia));
         Mockito.verify(agenciaRepository, Mockito.never()).persist(agencia);
     }
-
-
-
 }
