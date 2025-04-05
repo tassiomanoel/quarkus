@@ -7,6 +7,8 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.UriInfo;
 import org.jboss.resteasy.reactive.RestResponse;
 
+import java.util.List;
+
 @Path("/agencias")
 public class AgenciaController {
 
@@ -26,6 +28,11 @@ public class AgenciaController {
     @Path("/{id}")
     public RestResponse<Agencia> buscarPorId(Long id) {
         return RestResponse.ok(agenciaService.buscarPorId(id));
+    }
+
+    @GET
+    public RestResponse<List<Agencia>> buscarTodos() {
+        return RestResponse.ok(agenciaService.buscarTodos());
     }
 
     @DELETE

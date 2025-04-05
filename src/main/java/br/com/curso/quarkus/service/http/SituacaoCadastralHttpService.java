@@ -10,6 +10,6 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 public interface SituacaoCadastralHttpService {
 
     @GET
-    @Path("/{cnpj}")
+    @Path("{cnpj}")
     AgenciaHttp buscarPorCnpj(String cnpj);
 }

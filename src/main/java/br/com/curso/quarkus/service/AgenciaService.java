@@ -13,6 +13,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import java.util.List;
+
 @ApplicationScoped
 public class AgenciaService {
 
@@ -29,26 +31,40 @@ public class AgenciaService {
 
     @Transactional
     public void cadastrar(Agencia agencia) {
-        Timer timer = this.meterRegistry.timer("cadastrar_agencia_timer");
-        timer.record(() -> {
-            AgenciaHttp agenciaRetorno = situacaoCadastralHttpService.buscarPorCnpj(agencia.getCnpj());
-            if(agenciaRetorno != null && agenciaRetorno.getSituacaoCadastral().equals(SituacaoCadastral.ATIVO)) {
-                agenciaRepository.persist(agencia);
-                Log.info("Agência incluida com sucesso.");
-                meterRegistry.counter("agencia_adicionada_counter").increment();
-            } else if(agenciaRetorno != null && agenciaRetorno.getSituacaoCadastral().equals(SituacaoCadastral.INATIVO)) {
-                Log.info("Agência encontrada está inativa.");
-                throw new AgenciaNaoAtivaOuNaoEncontradaException();
-            } else {
-                Log.info("Agência não encontrada.");
-                meterRegistry.counter("agencia_nao_adicionada_counter").increment();
-                throw new AgenciaNaoAtivaOuNaoEncontradaException();
-            }
-        });
+        try {
+
+            Timer timer = this.meterRegistry.timer("cadastrar_agencia_timer");
+            timer.record(() -> {
+                AgenciaHttp agenciaRetorno = situacaoCadastralHttpService.buscarPorCnpj(agencia.getCnpj());
+
+                if(agenciaRetorno != null && agenciaRetorno.getSituacaoCadastral().equals(SituacaoCadastral.ATIVO)) {
+                    agenciaRepository.persist(agencia);
+                    Log.info("Agência incluida com sucesso. ");
+                    meterRegistry.counter("agencia_adicionada_counter").increment();
+
+                } else if(agenciaRetorno != null && agenciaRetorno.getSituacaoCadastral().equals(SituacaoCadastral.INATIVO)) {
+                    Log.info("Agência encontrada está inativa.");
+                    throw new AgenciaNaoAtivaOuNaoEncontradaException();
+
+                } else {
+
+                    Log.info("Agência não encontrada.");
+                    meterRegistry.counter("agencia_nao_adicionada_counter").increment();
+                    throw new AgenciaNaoAtivaOuNaoEncontradaException();
+                }
+            });
+        } catch(Exception e) {
+            Log.info("Erro exception " + e.getLocalizedMessage() + " Exception total " + e);
+            throw new AgenciaNaoAtivaOuNaoEncontradaException();
+        }
     }
 
     public Agencia buscarPorId(Long id) {
         return agenciaRepository.findById(id);
+    }
+
+    public List<Agencia> buscarTodos() {
+        return agenciaRepository.findAll().stream().toList();
     }
 
     @Transactional
